@@ -1,0 +1,74 @@
+---
+all:
+  vars:
+    rhsm_user: <RHN User>
+    rhsm_pass: <RHN Password>
+    rhsm_pool: <RHN Pool ID>
+    ssh_key: <Public SSH Key>
+    # ssh_password: "password"
+    networks:
+      - name: openshift311
+        subnet: 10.44.90.0/24
+        id: 8484
+        dnsname: openshift.lab
+        dnsmasq_options:
+          - "address=/openshift-cluster.openshift.lab/10.44.90.10"
+          - "address=/apps.openshift.lab/10.44.90.10"
+    kvm_host: 192.168.0.15
+    os_image: /var/lib/libvirt/images/iso/rhel-server-7.9-x86_64-kvm.qcow2
+    os_path: /var/lib/virt/nvme
+    os_image_size: 120G
+
+masters:
+  hosts:
+    master01.openshift.lab:
+    master02.openshift.lab:
+    master03.openshift.lab:
+  vars:
+    interfaces:
+      - network: openshift311
+    memory: 16
+    vcpus: 8
+    extra_disks:
+      size: 50G
+      count: 4
+    ansible_host: "{{ (lookup('file', inventory_dir + '/data.json') | from_json).get(inventory_hostname) }}"
+
+nodes:
+  hosts:
+    node01.openshift.lab:
+    node02.openshift.lab:
+    node03.openshift.lab:
+  vars:
+    interfaces:
+      - network: openshift311
+    memory: 16
+    vcpus: 8
+    extra_disks:
+      size: 50G
+      count: 4
+    ansible_host: "{{ (lookup('file', inventory_dir + '/data.json') | from_json).get(inventory_hostname) }}"
+
+infra:
+  hosts:
+    infra01.openshift.lab:
+    infra02.openshift.lab:
+  vars:
+    interfaces:
+      - network: openshift311
+    memory: 16
+    vcpus: 8
+    ansible_host: "{{ (lookup('file', inventory_dir + '/data.json') | from_json).get(inventory_hostname) }}"
+
+lbs:
+  hosts:
+    lb.openshift.lab:
+      net:
+        eth0:
+          ip: 10.44.90.10/24
+  vars:
+    interfaces:
+      - network: openshift311
+    memory: 4
+    vcpus: 2
+    ansible_host: "{{ (lookup('file', inventory_dir + '/data.json') | from_json).get(inventory_hostname) }}"

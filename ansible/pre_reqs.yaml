@@ -1,7 +1,7 @@
 ---
 
 - name: Pre Reqs
-  hosts: all,!lbs
+  hosts: all,!lbs,!bastion
   gather_facts: false
   tasks:
     - name: Register system
@@ -93,3 +93,15 @@
         state: started
         enabled: true
 
+- name: Setup Bastion
+  hosts: bastion
+  gather_facts: false
+  tasks:
+    - name: Register system
+      redhat_subscription:
+        state: present
+        username: "{{ rhsm_user }}"
+        password: "{{ rhsm_pass }}"
+        pool_ids:
+          - "{{ rhsm_pool }}"
+        auto_attach: true
