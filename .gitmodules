@@ -1,0 +1,3 @@
+[submodule "kvm-ansible"]
+	path = kvm-ansible
+	url = https://github.com/greeninja/kvm-ansible.git
