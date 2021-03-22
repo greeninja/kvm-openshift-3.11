@@ -1,0 +1,95 @@
+---
+
+- name: Pre Reqs
+  hosts: all,!lbs
+  gather_facts: false
+  tasks:
+    - name: Register system
+      redhat_subscription:
+        state: present
+        username: "{{ rhsm_user }}"
+        password: "{{ rhsm_pass }}"
+        pool_ids:
+          - "{{ rhsm_pool }}"
+        auto_attach: false
+
+    - name: Disable all repos
+      shell: 'subscription-manager repos --disable="*"'
+
+    - name: Enable Openshift 3.11 repos
+      shell: "subscription-manager repos --enable={{ item }}"
+      loop:
+        - 'rhel-7-server-rpms'
+        - 'rhel-7-server-extras-rpms'
+        - 'rhel-7-server-ose-3.11-rpms'
+        - 'rhel-7-server-ansible-2.9-rpms'
+
+    - name: Install utilities required
+      package:
+        name: "{{ item }}"
+        state: latest
+      loop:
+        - net-tools
+        - bind-utils
+        - yum-utils
+        - iptables-services
+        - bridge-utils
+        - bash-completion
+        - kexec-tools
+        - sos
+        - psacct
+        - atomic
+        - docker-1.13.1
+        - glusterfs-fuse
+
+    - name: Start and Enable Docker
+      service:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Reboot for fun
+      reboot:
+        reboot_timeout: 300
+
+- name: Setup LB
+  hosts: lbs
+  gather_facts: false
+  tasks:
+    - name: Register system
+      redhat_subscription:
+        state: present
+        username: "{{ rhsm_user }}"
+        password: "{{ rhsm_pass }}"
+        pool_ids:
+          - "{{ rhsm_pool }}"
+        auto_attach: true
+    - name: Install Nginx
+      yum_repository:
+        name: nginx
+        description: NGINX Repo
+        baseurl: "http://nginx.org/packages/mainline/rhel/7/$basearch/"
+        gpgcheck: no
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+      register: sel
+    - name: Reboot for SELinux
+      reboot:
+        msg: "Rebooted by ansible"
+        reboot_timeout: 300
+      when: sel.changed
+    - name: Install nginx
+      package:
+        name: nginx
+        state: installed
+    - name: Configure Nginx
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+    - name: Start and enable Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
