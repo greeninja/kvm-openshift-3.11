@@ -20,14 +20,14 @@ stream {
 
   upstream http_lb {
     least_conn;
-    {% for host in groups['masters'] %}
+    {% for host in groups['infra'] %}
     server {{ hostvars[host]['inventory_hostname_short'] }}:80 max_fails=3 fail_timeout=10s;
     {% endfor %}
   }
 
   upstream https_lb {
     least_conn;
-    {% for host in groups['masters'] %}
+    {% for host in groups['infra'] %}
     server {{ hostvars[host]['inventory_hostname_short'] }}:443 max_fails=3 fail_timeout=10s;
     {% endfor %}
   }
