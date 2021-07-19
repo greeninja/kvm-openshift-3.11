@@ -1,17 +1,17 @@
 ---
 
 - name: Pre Reqs
-  hosts: all,!lbs,!bastion
+  hosts: all,!lbs
   gather_facts: false
   tasks:
-    - name: Register system
-      redhat_subscription:
-        state: present
-        username: "{{ rhsm_user }}"
-        password: "{{ rhsm_pass }}"
-        pool_ids:
-          - "{{ rhsm_pool }}"
-        auto_attach: false
+    #    - name: Register system
+    #      redhat_subscription:
+    #        state: present
+    #        username: "{{ rhsm_user }}"
+    #        password: "{{ rhsm_pass }}"
+    #        pool_ids:
+    #          - "{{ rhsm_pool }}"
+    #        auto_attach: false
 
     - name: Disable all repos
       shell: 'subscription-manager repos --disable="*"'
@@ -97,11 +97,10 @@
   hosts: bastion
   gather_facts: false
   tasks:
-    - name: Register system
-      redhat_subscription:
-        state: present
-        username: "{{ rhsm_user }}"
-        password: "{{ rhsm_pass }}"
-        pool_ids:
-          - "{{ rhsm_pool }}"
-        auto_attach: true
+    - name: Install Openshift Ansible
+      package:
+        name: openshift-ansible
+        state: installed
+    - debug:
+        msg: "Now copy openshift inventory to bastion and run the pre-reqs and debloy cluster playbooks"
+
